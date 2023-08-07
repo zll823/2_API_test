@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        button{
+            border-radius: 5px; border: 1px solid black; box-shadow: 4px 4px 4px #cfcfcf;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-default" role="navigation" style="background-color: white;box-shadow: 4px 4px 6px darkgray;
+border-image:linear-gradient(to right,#ff8cd0,#77a4cb,#ff8cd0,#ffb658) 1 10;
+position: absolute;top: 0px;left: 80px;width:-webkit-calc(100% - 200px);">
+    <div class="container-fluid">
+    <div class="navbar-header">
+        <span style="font-size: xx-small" class="navbar-brand" >项目名称：{{ project.name }}</span>
+        <a class="navbar-brand" href="/project_list/">返回项目列表</a>
+    </div>
+    <div>
+        <ul class="nav navbar-nav">
+            <li  ><a href="/apis/{{ project.id }}/" >接口库</a></li>
+            <li ><a href="/cases/{{ project.id }}/">用例库</a></li>
+            <li><a href="/project_set/{{ project.id }}/">项目设置</a></li>
+            <li  class="active"><a style="background: linear-gradient( to right,#a7e2ff,white,#ffd7e1)"  href="/global_data/{{ project.id }}/">全局变量</a></li>
+        </ul>
+    </div>
+    </div>
+</nav>
+
+<br><br>
+
+
+
+<table class="table table-bordered" style="width: auto;margin-left: 100px">
+  <caption>选择不同变量组后，右侧进行修改 <button class="btn btn-default" onclick="add_new()">新增变量组</button>
+        <button class="btn btn-default" onclick="save_one()" style="">保存当前</button></caption>
+  <thead style="background: linear-gradient(to right,#daf6fe,white,#ffe7ef)">
+    <tr>
+        <th  style="width: 20px"></th>
+      <th style="width: 500px">变量组名称</th>
+        <th style="width: 100px">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for i in global_data %}
+         <tr>
+          <td><input type="checkbox" id="check_{{ i.id }}" value="{{ i.id }}" name="check_names" onchange="change_check()"></td>
+          <td><button onclick="show('{{ i.id }}','{{ i.name }}','{{ i.data }}')" class="btn btn-default" style="background: linear-gradient(to right,#daf6fe,white,#ffe7ef);margin-top: 5px; ">{{ i.name }}</button></td>
+          <td><button onclick="delete_one('{{ i.id }}')" class="btn-danger">删除</button></td>
+        </tr>
+        <script>
+        if("{{ project.global_datas }}" != "None" && "{{ project.global_datas }}" != ""){
+            if( $.inArray(  "{{ i.id }}", "{{ project.global_datas }}".split(',') ) != -1 ){
+                document.getElementById('check_{{ i.id }}').checked = 'checked'
+            }
+        }
+    </script>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div style=";position: absolute;left: 732px;top: 110px;width: -webkit-calc(100% - 870px)">
+    <input type="text" id="id" style="display: none;">
+    <input id="name" type="text" style="border-image:linear-gradient(to right,#8ce3fe,#ffbae5) 1 10;width: 100%" placeholder="修改变量组的名字"> <br>
+    <textarea id="data" style="border-image:linear-gradient(to right,#b5e1fe,#ffbed8) 1 10;width: 100%;height: 500px;" placeholder="输入json格式的变量组内容"></textarea>
+</div>
+
+
+<script>
+    function show(id,name,data) {
+        document.getElementById('id').value = id;
+        document.getElementById('name').value = name;
+        document.getElementById('data').value = data;
+
+    }
+    function add_new() {
+        $.get("/global_data_add/",{
+            "project_id":"{{ project.id }}"
+        },function (ret) {
+            document.location.reload()
+        })
+    }
+    function delete_one(id) {
+        $.get("/global_data_delete/",{
+            "id":id
+        },function (ret) {
+            document.location.reload()
+        })
+    }
+    function save_one() {
+        global_id = document.getElementById('id').value;
+        global_name = document.getElementById('name').value;
+        global_data = document.getElementById('data').value;
+        $.get('/global_data_save/',{
+            "global_id":global_id,
+            "global_name":global_name,
+            "global_data":global_data,
+        },function (ret) {
+
+            if(ret == 'error'){
+                alert('无法保存！');
+                return
+            }
+
+            document.location.reload()
+        })
+    }
+    function change_check() {
+        // 获取所有选中的checkbox的值 组成列表 chk_value
+        var chk_value =[];
+        $('input[name="check_names"]:checked').each(function(){
+        chk_value.push($(this).val());
+        }); //依然是jq的方法
+
+        // 把结果发送给后台
+        $.get("/global_data_change_check/",{
+            "project_id":"{{ project.id }}",
+            "global_datas": chk_value.toString()
+        },function (ret) {
+            document.location.reload()
+        })
+    }
+</script>
+</body>
+</html>
